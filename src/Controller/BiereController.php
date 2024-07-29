@@ -63,8 +63,8 @@ class BiereController extends AbstractController
     public function show(): JsonResponse
     {
         $bieres = $this->repository->findAll();
-        $responseData = $this->serializer->serialize($bieres, 'json');
-
+        $responseData = $this->serializer->serialize($bieres, 'json', ['groups' => ['biere:read']]);
+    
         return new JsonResponse($responseData, Response::HTTP_OK, [], true);
     }
 
