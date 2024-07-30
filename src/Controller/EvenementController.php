@@ -59,12 +59,18 @@ class EvenementController extends AbstractController
         return new JsonResponse($responseData, Response::HTTP_CREATED, ["Location" => $location], true);
     }
 
-    #[Route('/get', name:'show', methods:['GET'])]
-    public function show(): JsonResponse
+    #[Route('/get', name: 'show', methods: ['GET'])]
+    public function show(EntityManagerInterface $entityManager, SerializerInterface $serializer): JsonResponse 
     {
-        $evenements = $this->repository->findAll();
-        $responseData = $this->serializer->serialize($evenements, 'json');
-
+        $queryBuilder = $entityManager->createQueryBuilder();
+        $queryBuilder->select('e')
+            ->from(Evenement::class, 'e');
+    
+        $query = $queryBuilder->getQuery();
+        $animals = $query->getArrayResult();
+    
+        $responseData = $serializer->serialize($animals, 'json');
+    
         return new JsonResponse($responseData, Response::HTTP_OK, [], true);
     }
 

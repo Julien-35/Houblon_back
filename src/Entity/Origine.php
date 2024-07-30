@@ -68,6 +68,7 @@ class Origine
     public function removeBiere(Biere $biere): static
     {
         if ($this->bieres->removeElement($biere)) {
+            // set the owning side to null (unless already changed)
             if ($biere->getOrigine() === $this) {
                 $biere->setOrigine(null);
             }
