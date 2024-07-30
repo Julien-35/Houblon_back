@@ -1,24 +1,20 @@
 # config/services.yaml
 
-parameters:
-    # Placez ici les paramètres globaux
-
 services:
-    # Configuration par défaut pour les services définis dans ce fichier
+    # Default configuration for services in this file
     _defaults:
-        autowire: true      # Injecte automatiquement les dépendances dans vos services
-        autoconfigure: true # Enregistre automatiquement vos services comme commandes, abonnés aux événements, etc.
+        autowire: true      # Automatically injects dependencies in your services.
+        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
 
-    # Définit les services pour le répertoire src/
+    # Makes classes in src/ available to be used as services
     App\:
         resource: '../src/'
         exclude:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
             - '../src/Kernel.php'
+            - '../src/{DependencyInjection,Entity,Migrations,Tests,Kernel.php}'
 
-    # Autres définitions de services peuvent aller ici si nécessaire
-    # Exemple: 
-    # App\Service\SomeService:
-    #     arguments:
-    #         $someDependency: '@some_service'
+    App\Security\ApiTokenAuthenticator:
+        arguments:
+            $repository: '@App\Repository\UserRepository'

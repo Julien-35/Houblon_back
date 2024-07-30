@@ -12,28 +12,19 @@ class Biere
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['biere:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 50)]
-    #[Groups(['biere:read'])]
     private ?string $nom = null;
 
     #[ORM\Column(length: 250)]
-    #[Groups(['biere:read'])]
     private ?string $description = null;
 
     #[ORM\Column(length: 10)]
-    #[Groups(['biere:read'])]
     private ?string $taux_alcool = null;
 
     #[ORM\Column(type: Types::TEXT)]
-    #[Groups(['biere:read'])]
     private ?string $image_data = null;
-
-    #[ORM\ManyToOne(targetEntity: Origine::class, inversedBy: 'bieres')]
-    #[Groups(['biere:read'])]
-    private ?Origine $origine = null;
 
     public function getId(): ?int
     {
@@ -84,19 +75,6 @@ class Biere
     public function setImageData(string $image_data): static
     {
         $this->image_data = $image_data;
-
-        return $this;
-    }
-
-    public function getOrigine(): ?Origine
-    {
-        return $this->origine;
-    }
-
-    public function setOrigine(?Origine $origine): static
-    {
-        $this->origine = $origine;
-
         return $this;
     }
 }

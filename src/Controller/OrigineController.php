@@ -59,23 +59,15 @@ class OrigineController extends AbstractController
         return new JsonResponse($responseData, Response::HTTP_CREATED, ["Location" => $location], true);
     }
 
-    #[Route('/get', name: 'app_api_houblon_origine_show', methods: ['GET'])]
+    #[Route('/get', name:'show', methods:['GET'])]
     public function show(): JsonResponse
     {
         $origines = $this->repository->findAll();
-
-        $debugData = $this->serializer->normalize($origines, null, ['groups' => ['origine:read']]);
-        file_put_contents('debug_data.json', json_encode($debugData, JSON_PRETTY_PRINT));
-
-        if (empty($origines)) {
-            return new JsonResponse(['message' => 'No data found'], Response::HTTP_NOT_FOUND);
-        }
-        $responseData = $this->serializer->serialize($origines, 'json', ['groups' => ['origine:read']]);
+        $responseData = $this->serializer->serialize($origines, 'json');
 
         return new JsonResponse($responseData, Response::HTTP_OK, [], true);
     }
 
-    
     #[Route('/{id}', name:'edit', methods:['PUT'])]
     public function edit(int $id, Request $request): JsonResponse
     {
