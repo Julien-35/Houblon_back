@@ -21,6 +21,7 @@ class BiereRepository extends ServiceEntityRepository
         parent::__construct($registry, Biere::class);
     }
 
+
 //    /**
 //     * @return Biere[] Returns an array of Biere objects
 //     */

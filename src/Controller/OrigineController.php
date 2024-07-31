@@ -59,13 +59,27 @@ class OrigineController extends AbstractController
         return new JsonResponse($responseData, Response::HTTP_CREATED, ["Location" => $location], true);
     }
 
+
     #[Route('/get', name:'show', methods:['GET'])]
     public function show(): JsonResponse
     {
         $origines = $this->repository->findAll();
-        $responseData = $this->serializer->serialize($origines, 'json');
+    
+        $originesArray = [];
+        foreach ($origines as $origine) {
+            $biereNoms = [];
+            foreach ($origine->getBieres() as $biere) {
+                $biereNoms[] = $biere->getNom();
+            }
 
-        return new JsonResponse($responseData, Response::HTTP_OK, [], true);
+            $originesArray[] = [
+                'id' => $origine->getId(),
+                'label' => $origine->getLabel(),
+                'bieres' => $biereNoms
+            ];
+        }
+
+        return new JsonResponse($originesArray, Response::HTTP_OK);
     }
 
     #[Route('/{id}', name:'edit', methods:['PUT'])]

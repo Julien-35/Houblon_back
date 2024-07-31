@@ -62,10 +62,21 @@ class BiereController extends AbstractController
     #[Route('/get', name:'show', methods:['GET'])]
     public function show(): JsonResponse
     {
-        $biere = $this->repository->findAll();
-        $responseData = $this->serializer->serialize($biere, 'json');
-
-        return new JsonResponse($responseData, Response::HTTP_OK, [], true);
+        $bieres = $this->repository->findAll();
+    
+        $bieresArray = [];
+        foreach ($bieres as $biere) {
+            $bieresArray[] = [
+                'id' => $biere->getId(),
+                'nom' => $biere->getNom(),
+                'description' => $biere->getDescription(),
+                'taux_alcool' => $biere->getTauxAlcool(),
+                'image_data' => $biere->getImageData(),
+                'origine' => $biere->getOrigine() ? $biere->getOrigine()->getLabel() : null
+            ];
+        }
+    
+        return new JsonResponse($bieresArray, Response::HTTP_OK);
     }
 
     #[Route('/{id}', name:'edit', methods:['PUT'])]
