@@ -72,7 +72,11 @@ class BiereController extends AbstractController
                 'description' => $biere->getDescription(),
                 'taux_alcool' => $biere->getTauxAlcool(),
                 'image_data' => $biere->getImageData(),
-                'origine' => $biere->getOrigine() ? $biere->getOrigine()->getLabel() : null
+                'origine' => $biere->getOrigine() ? $biere->getOrigine()->getLabel() : null,
+                'stock' => $biere->getStock() ? $biere->getStock()->getQuantite() : null,
+                'categorie' => $biere->getCategorie() ? $biere->getCategorie()->getNom() : null
+
+
             ];
         }
     

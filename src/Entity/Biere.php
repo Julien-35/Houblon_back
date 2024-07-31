@@ -34,6 +34,12 @@ class Biere
     #[Groups(['biere:read'])]
     private ?Origine $origine = null;
 
+    #[ORM\OneToOne(cascade: ['persist', 'remove'])]
+    private ?Stock $Stock = null;
+
+    #[ORM\ManyToOne(inversedBy: 'bieres')]
+    private ?Categorie $Categorie = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -94,6 +100,30 @@ class Biere
     public function setOrigine(?Origine $origine): static
     {
         $this->origine = $origine;
+
+        return $this;
+    }
+
+    public function getStock(): ?Stock
+    {
+        return $this->Stock;
+    }
+
+    public function setStock(?Stock $Stock): static
+    {
+        $this->Stock = $Stock;
+
+        return $this;
+    }
+
+    public function getCategorie(): ?Categorie
+    {
+        return $this->Categorie;
+    }
+
+    public function setCategorie(?Categorie $Categorie): static
+    {
+        $this->Categorie = $Categorie;
 
         return $this;
     }
