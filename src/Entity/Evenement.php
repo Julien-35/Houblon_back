@@ -19,8 +19,8 @@ class Evenement
 
     #[ORM\Column(length: 250)]
     private ?string $description = null;
-
-    #[ORM\Column(type: Types::TEXT)]
+    
+    #[ORM\Column(type: Types::TEXT, nullable: true, length: 500000)]
     private ?string $image_data = null;
 
     public function getId(): ?int
@@ -56,8 +56,7 @@ class Evenement
     {
         return $this->image_data;
     }
-
-    public function setImageData(string $image_data): static
+    public function setImageData(?string $image_data): self
     {
         $this->image_data = $image_data;
 

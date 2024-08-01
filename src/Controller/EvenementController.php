@@ -40,24 +40,43 @@ class EvenementController extends AbstractController
         $this->serializer = $serializer;
         $this->urlGenerator = $urlGenerator;
     }
-
     #[Route('', name:'create', methods:['POST'])]
     public function new(Request $request): JsonResponse
     {
-        $evenement = $this->serializer->deserialize($request->getContent(), Evenement::class, 'json');
-        $this->manager->persist($evenement);
-        $this->manager->flush();
-        
-        $responseData = $this->serializer->serialize($evenement, 'json');
-        
-        $location = $this->urlGenerator->generate(
-            'app_api_houblon_evenement_show',
-            ['id' => $evenement->getId()],
-            UrlGeneratorInterface::ABSOLUTE_URL
-        );
-
-        return new JsonResponse($responseData, Response::HTTP_CREATED, ["Location" => $location], true);
+        try {
+            $data = json_decode($request->getContent(), true);
+    
+            // Validation des champs obligatoires
+            $nom = $data['nom'] ?? null;
+            $description = $data['description'] ?? null;
+            $imageDataBase64 = $data['image_data'] ?? null;
+    
+            if (!$nom || !$description) {
+                return new JsonResponse(['error' => 'Nom et description sont obligatoires'], Response::HTTP_BAD_REQUEST);
+            }
+    
+            // Vérifiez si la chaîne base64 est correctement formée
+            if ($imageDataBase64 && !preg_match('/^[a-zA-Z0-9+\/=]+\s*$/', $imageDataBase64)) {
+                return new JsonResponse(['error' => 'Données d\'image non valides'], Response::HTTP_BAD_REQUEST);
+            }
+    
+            // Création de l'événement
+            $evenement = new Evenement();
+            $evenement->setNom($nom);
+            $evenement->setDescription($description);
+            $evenement->setImageData($imageDataBase64);
+    
+            // Enregistrement en base de données
+            $this->manager->persist($evenement);
+            $this->manager->flush();
+    
+            return new JsonResponse(['message' => 'Événement créé avec succès'], Response::HTTP_CREATED);
+        } catch (\Exception $e) {
+            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
+
+
 
     #[Route('/get', name: 'show', methods: ['GET'])]
     public function show(EntityManagerInterface $entityManager, SerializerInterface $serializer): JsonResponse 
@@ -67,29 +86,40 @@ class EvenementController extends AbstractController
             ->from(Evenement::class, 'e');
     
         $query = $queryBuilder->getQuery();
-        $animals = $query->getArrayResult();
+        $evenements = $query->getArrayResult();
     
-        $responseData = $serializer->serialize($animals, 'json');
+        $responseData = $serializer->serialize($evenements, 'json');
     
         return new JsonResponse($responseData, Response::HTTP_OK, [], true);
     }
 
-    #[Route('/{id}', name:'edit', methods:['PUT'])]
+    #[Route('/{id}', name: 'edit', methods: ['PUT'])]
     public function edit(int $id, Request $request): JsonResponse
     {
-        $evenement = $this->repository->findOneBy(['id' => $id]);
-        if ($evenement) {
-            $evenement = $this->serializer->deserialize(
-                $request->getContent(),
-                Evenement::class,
-                'json',
-                [AbstractNormalizer::OBJECT_TO_POPULATE => $evenement]
-            );
-            $this->manager->flush();
-
-            return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+        $evenement = $this->repository->find($id);
+        if (!$evenement) {
+            return new JsonResponse(['error' => 'Événement non trouvé'], Response::HTTP_NOT_FOUND);
         }
-        return new JsonResponse(null, Response::HTTP_NOT_FOUND);
+    
+        $data = json_decode($request->getContent(), true);
+    
+        if (isset($data['nom'])) {
+            $evenement->setNom($data['nom']);
+        }
+        if (isset($data['description'])) {
+            $evenement->setDescription($data['description']);
+        }
+        if (isset($data['image_data'])) {
+            $evenement->setImageData($data['image_data']);
+        }
+    
+        try {
+            $this->manager->flush();
+            return new JsonResponse(['message' => 'Événement modifié avec succès'], Response::HTTP_OK);
+        } catch (\Exception $e) {
+            error_log($e->getMessage());
+            return new JsonResponse(['error' => 'Erreur interne du serveur'], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
     #[Route('/{id}', name:'delete', methods:['DELETE'])]
