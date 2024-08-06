@@ -17,45 +17,51 @@ class SecurityController extends AbstractController
     public function __construct(
         private EntityManagerInterface $manager,
         private UserPasswordHasherInterface $passwordHasher,
-        private RoleRepository $roleRepository
+        private RoleRepository $roleRepository // Ajout du RoleRepository
     ) {}
 
+    #[Route('/registration', name: 'registration', methods: 'POST')]
     #[Route('/registration', name: 'registration', methods: 'POST')]
     public function register(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
-        dump($data); // Debugging
+        dump($data); // Debugging: Output the received data
 
-        // Validation des données reçues
         if (!isset($data['email']) || !isset($data['password']) || !isset($data['role'])) {
             return new JsonResponse(['error' => 'Email, password, and role are required'], Response::HTTP_BAD_REQUEST);
         }
 
-        // Vérifier si l'utilisateur existe déjà
         $existingUser = $this->manager->getRepository(User::class)->findOneBy(['email' => $data['email']]);
         if ($existingUser) {
             return new JsonResponse(['error' => 'User already exists'], Response::HTTP_CONFLICT);
         }
 
-        // Vérifier le rôle en utilisant l'ID directement
-        $roleId = $data['role']; // Assurez-vous que c'est un entier ici
+        // Convert role label to role_id
+        $roleLabel = $data['role'];
+        $roleIdMap = [
+            'employe' => 1,
+            'stock' => 2,
+        ];
 
-        $role = $this->roleRepository->find($roleId);
+        if (!array_key_exists($roleLabel, $roleIdMap)) {
+            return new JsonResponse(['error' => 'Invalid role'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $role = $this->roleRepository->find($roleIdMap[$roleLabel]);
         if (!$role) {
             return new JsonResponse(['error' => 'Invalid role'], Response::HTTP_BAD_REQUEST);
         }
 
-        // Créer et enregistrer le nouvel utilisateur
         $user = new User();
         $user->setEmail($data['email']);
         $user->setPassword($this->passwordHasher->hashPassword($user, $data['password']));
-        $user->setRole($role);
-        $user->setApiToken(bin2hex(random_bytes(20)));
+        $user->setRole($role); // Assigner le rôle à l'utilisateur
+        $user->setApiToken(bin2hex(random_bytes(20))); // Générer un nouveau jeton
 
         $this->manager->persist($user);
         $this->manager->flush();
 
-        dump($user); // Debugging
+        dump($user); // Debugging: Output the user object to verify it has been set up correctly
 
         return new JsonResponse([
             'email' => $user->getEmail(),
@@ -72,7 +78,7 @@ class SecurityController extends AbstractController
         }
 
         return new JsonResponse([
-            'user' => $user->getUserIdentifier(),
+            'user'  => $user->getUserIdentifier(),
             'apiToken' => $user->getApiToken(),
             'roles' => $user->getRoles(),
         ]);

@@ -20,6 +20,8 @@ use OpenApi\Attributes\JsonContent;
 use OpenApi\Attributes\MediaType;
 use OpenApi\Attributes\Schema;
 
+use App\Utils\UploadedBase64File;
+use App\Utils\Base64FileExtractor;
 
 #[Route('/api/evenement', name:'app_api_houblon_evenement_')]
 class EvenementController extends AbstractController
@@ -41,39 +43,35 @@ class EvenementController extends AbstractController
         $this->urlGenerator = $urlGenerator;
     }
     #[Route('', name:'create', methods:['POST'])]
-    public function new(Request $request): JsonResponse
+    public function createEvenement(Request $request, EntityManagerInterface $entityManager): Response
     {
-        try {
-            $data = json_decode($request->getContent(), true);
-    
-            // Validation des champs obligatoires
-            $nom = $data['nom'] ?? null;
-            $description = $data['description'] ?? null;
-            $imageDataBase64 = $data['image_data'] ?? null;
-    
-            if (!$nom || !$description) {
-                return new JsonResponse(['error' => 'Nom et description sont obligatoires'], Response::HTTP_BAD_REQUEST);
-            }
-    
-            // Vérifiez si la chaîne base64 est correctement formée
-            if ($imageDataBase64 && !preg_match('/^[a-zA-Z0-9+\/=]+\s*$/', $imageDataBase64)) {
-                return new JsonResponse(['error' => 'Données d\'image non valides'], Response::HTTP_BAD_REQUEST);
-            }
-    
-            // Création de l'événement
-            $evenement = new Evenement();
-            $evenement->setNom($nom);
-            $evenement->setDescription($description);
-            $evenement->setImageData($imageDataBase64);
-    
-            // Enregistrement en base de données
-            $this->manager->persist($evenement);
-            $this->manager->flush();
-    
-            return new JsonResponse(['message' => 'Événement créé avec succès'], Response::HTTP_CREATED);
-        } catch (\Exception $e) {
-            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        // Créez une nouvelle instance de l'entité Evenement
+        $evenement = new Evenement();
+        
+        // Récupérez les données envoyées dans la requête POST
+        $data = json_decode($request->getContent(), true);
+        
+        // Vérifiez et définissez les propriétés de l'evenement
+        if (isset($data['nom'])) {
+            $evenement->setNom($data['nom']);
+        } else {
+            return new Response('Nom is required', Response::HTTP_BAD_REQUEST);
         }
+        
+        if (isset($data['description'])) {
+            $evenement->setDescription($data['description']);
+        }
+        
+        if (isset($data['image_data'])) {
+            $evenement->setImageData($data['image_data']);
+        }
+        
+        // Persistez et sauvegardez l'evenement dans la base de données
+        $entityManager->persist($evenement);
+        $entityManager->flush();
+        
+        // Retournez une réponse réussie
+        return new Response('Evenement created successfully', Response::HTTP_CREATED);
     }
 
 

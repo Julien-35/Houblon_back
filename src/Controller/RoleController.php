@@ -3,7 +3,6 @@
 namespace App\Controller;
 
 use App\Entity\Role;
-use DateTimeImmutable ;
 use App\Repository\RoleRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\{JsonResponse, Request, Response};
@@ -21,72 +20,73 @@ use OpenApi\Attributes\MediaType;
 use OpenApi\Attributes\Schema;
 
 
-#[Route('/api/role', name:'app_api_houblon_role_')]
+
+
+#[Route('api/role', name:'app_api_arcadia_role_')]
 class RoleController extends AbstractController
 {
-    private EntityManagerInterface $manager;
-    private RoleRepository $repository;
-    private SerializerInterface $serializer;
-    private UrlGeneratorInterface $urlGenerator;
-
     public function __construct(
-        EntityManagerInterface $manager,
-        RoleRepository $repository,
-        SerializerInterface $serializer,
-        UrlGeneratorInterface $urlGenerator
-    ) {
-        $this->manager = $manager;
-        $this->repository = $repository;
-        $this->serializer = $serializer;
-        $this->urlGenerator = $urlGenerator;
+        private EntityManagerInterface $manager,
+        private RoleRepository $repository,
+        private SerializerInterface $serializer,
+        private UrlGeneratorInterface $urlGenerator,
+    ){
     }
 
-    #[Route('', name:'create', methods:['POST'])]
+    #[Route('api/role', name:'app_api_arcadia_role_' , methods:'POST')]
     public function new(Request $request): JsonResponse
     {
         $role = $this->serializer->deserialize($request->getContent(), Role::class, 'json');
+
         $this->manager->persist($role);
         $this->manager->flush();
         
-        $responseData = $this->serializer->serialize($role, 'json');
+        $responseData = $this->serializer->serialize($role,'json');
         
         $location = $this->urlGenerator->generate(
-            'app_api_houblon_role_show',
+            'app_api_arcadia_role_show',
             ['id' => $role->getId()],
-            UrlGeneratorInterface::ABSOLUTE_URL
+            UrlGeneratorInterface::ABSOLUTE_URL,
         );
 
-        return new JsonResponse($responseData, Response::HTTP_CREATED, ["Location" => $location], true);
+        return new JsonResponse($responseData, Response::HTTP_CREATED,["Location" => $location], true);
+
     }
 
-    #[Route('/get', name:'show', methods:['GET'])]
-    public function show(): JsonResponse
+
+    #[Route('/{id}',name:'show', methods: 'GET')]
+    public function show(int $id): JsonResponse
     {
-        $roles = $this->repository->findAll();
-        $responseData = $this->serializer->serialize($roles, 'json');
-
-        return new JsonResponse($responseData, Response::HTTP_OK, [], true);
+        $role = $this->repository->FindOneBy (['id'=> $id]);
+        if ($role) {
+            $responseData = $this->serializer->serialize($role, 'json');
+            return new JsonResponse($responseData, Response ::HTTP_OK,[], true);
+        }
+        return new JsonResponse(NULL, Response ::HTTP_NOT_FOUND);
     }
 
-    #[Route('/{id}', name:'edit', methods:['PUT'])]
+
+
+
+    #[Route('/{id}', name:'edit', methods: 'PUT')]
     public function edit(int $id, Request $request): JsonResponse
     {
         $role = $this->repository->findOneBy(['id' => $id]);
         if ($role) {
             $role = $this->serializer->deserialize(
                 $request->getContent(),
-                Role::class,
-                'json',
+                    Role::class,
+                    'json',
                 [AbstractNormalizer::OBJECT_TO_POPULATE => $role]
             );
-            $this->manager->flush();
+        $this->manager->flush();
 
-            return new JsonResponse(null, Response::HTTP_NO_CONTENT);
-        }
-        return new JsonResponse(null, Response::HTTP_NOT_FOUND);
+        return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+    }
+    return new JsonResponse(null, Response::HTTP_NOT_FOUND);
     }
 
-    #[Route('/{id}', name:'delete', methods:['DELETE'])]
+    #[Route('/{id}',name:'delete', methods: 'DELETE')]
     public function delete(int $id): JsonResponse
     {
         $role = $this->repository->findOneBy(['id' => $id]);
@@ -94,8 +94,8 @@ class RoleController extends AbstractController
             $this->manager->remove($role);
             $this->manager->flush();
 
-            return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+            return new JsonResponse(NULL, Response ::HTTP_NO_CONTENT);
         }
-        return new JsonResponse(null, Response::HTTP_NOT_FOUND);
+        return new JsonResponse(NULL, Response ::HTTP_NOT_FOUND);
     }
 }
